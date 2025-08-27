@@ -23,7 +23,7 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-app.UseCors("AllowLocalhost");
+app.UseCors("AllowFrontend");
 
 if (app.Environment.IsDevelopment())
 {

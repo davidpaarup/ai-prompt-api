@@ -34,21 +34,25 @@ public class GraphClient
         return accessToken;
     }
 
-    public async Task<string> GetFileContentAsync(string driveId, string fileId)
+    public async Task<string> GetFileContentAsync(string fileId)
     {
-        var content = await _client.Drives[driveId].Items[driveId + "!" + fileId].Content.GetAsync(config =>
+        var split = fileId.Split('!');
+        var driveId = split[0];
+        
+        var content = await _client.Drives[driveId].Items[fileId].Content.GetAsync(config =>
         {
             var accessToken = GetAccessToken();
             config.Headers.Add("Authorization", accessToken);
         });
-        
+    
         if (content == null)
         {
             throw new Exception();
         }
-        
+    
         using var reader = new StreamReader(content);
         return await reader.ReadToEndAsync();
+    
     }
 
     public async Task<IEnumerable<DomainFile>> GetOneDriveItemsAsync()
@@ -69,15 +73,17 @@ public class GraphClient
             throw new Exception();
         }
         
-        return items.Value.Select(v =>
+        var result = items.Value.Select(v =>
         {
-            if (v.Id == null || v.Name == null || drive.Id == null)
+            if (v.Id == null || v.Name == null)
             {
                 throw new Exception();
             }
             
-            return new DomainFile(v.Id, v.Name, drive.Id);
+            return new DomainFile(v.Id, v.Name);
         });
+
+        return result;
         
         void ItemsConfiguration(RequestConfiguration<Microsoft.Graph.Me.Drive.DriveRequestBuilder
                 .DriveRequestBuilderGetQueryParameters> 

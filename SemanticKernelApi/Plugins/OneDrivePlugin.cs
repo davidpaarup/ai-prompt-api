@@ -22,9 +22,9 @@ public class OneDrivePlugin
     }
     
     [KernelFunction("fetch_content_of_file")]
-    [Description("Fetches the content of a file, given the file ID and drive ID")]
-    private Task<string> FetchNumberOfFilesAsync(string fileId, string driveId)
+    [Description("Fetches the content of a file, given the file ID")]
+    private Task<string> FetchNumberOfFilesAsync(string fileId)
     {
-        return _graphClient.GetFileContentAsync(fileId, driveId);
+        return _graphClient.GetFileContentAsync(fileId);
     }
 }

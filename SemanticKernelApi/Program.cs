@@ -11,7 +11,19 @@ builder.Services.AddOpenApi();
 builder.Services.AddSingleton<GraphClientFactory>();
 builder.Services.AddHttpContextAccessor();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowLocalhost", policy =>
+    {
+        policy.WithOrigins("http://localhost:5173")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+
 var app = builder.Build();
+
+app.UseCors("AllowLocalhost");
 
 if (app.Environment.IsDevelopment())
 {

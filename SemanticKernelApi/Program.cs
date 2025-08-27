@@ -15,7 +15,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:5173", "https://ai-prompt-drab-eta.vercel.app")
+        policy.WithOrigins("http://localhost:3000", "https://ai-prompt-bice.vercel.app")
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
@@ -72,72 +72,9 @@ app.MapPost("/prompt", async ([FromBody] PromptInput input) =>
     })
     .WithName("Prompt");
 
-app.MapGet("/auth-callback", async (HttpContext context, string code) =>
-    {
-        var tenantId = app.Configuration["TenantId"];
-        var clientId = app.Configuration["ClientId"];
-        var clientSecret = app.Configuration["ClientSecret"];
-        
-        if (clientId == null || clientSecret == null)
-        {
-            throw new Exception();
-        }
-
-        IEnumerable<string> scope =
-        [
-            "files.read",
-            "files.read.all",
-            "mail.read",
-            "mail.send",
-            "Calendars.Read"
-        ];
-        
-        var scopeString = string.Join(" ", scope);
-        
-        using var httpClient = new HttpClient();
-
-        var request = context.Request;
-        var currentUrl = $"{request.Scheme}://{request.Host}{request.Path}";
-
-        var contentElements = new List<KeyValuePair<string?, string?>>
-        {
-            new("client_id", clientId),
-            new("scope", scopeString),
-            new("code", code),
-            new("redirect_uri", currentUrl),
-            new("grant_type", "authorization_code"),
-            new("client_secret", clientSecret)
-        };
-            
-        var content = new FormUrlEncodedContent(contentElements);
-        
-        var result = await httpClient.PostAsync(
-            $"https://login.microsoftonline.com/{tenantId}/oauth2/v2.0/token", 
-            content);
-
-        if (!result.IsSuccessStatusCode)
-        {
-            var error = await result.Content.ReadAsStringAsync();
-        }
-        
-        var responseString = await result.Content.ReadFromJsonAsync<AuthResult>();
-
-        if (responseString == null)
-        {
-            throw new Exception();
-        }
-
-        return responseString.access_token;
-    })
-    .WithName("AuthCallback");
-
 app.Run();
 
 internal class PromptInput(string prompt)
 {
     public string Prompt { get; } = prompt;
-}
-
-internal class AuthResult {
-    public string access_token { get; set; }
 }

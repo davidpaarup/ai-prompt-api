@@ -13,9 +13,9 @@ builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowLocalhost", policy =>
+    options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:5173")
+        policy.WithOrigins("http://localhost:5173", "https://ai-prompt-drab-eta.vercel.app")
             .AllowAnyHeader()
             .AllowAnyMethod();
     });

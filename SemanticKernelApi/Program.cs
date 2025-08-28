@@ -1,4 +1,5 @@
-using Microsoft.AspNetCore.Mvc;
+using System.Net.WebSockets;
+using System.Text;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
@@ -23,6 +24,7 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+app.UseWebSockets();
 app.UseCors("AllowFrontend");
 
 if (app.Environment.IsDevelopment())
@@ -57,24 +59,65 @@ OpenAIPromptExecutionSettings openAiPromptExecutionSettings = new() 
 
 var history = new ChatHistory();
 
-app.MapPost("/prompt", async ([FromBody] PromptInput input) =>
+app.Map("/ws/prompt", async (HttpContext context) =>
     {
-        history.AddUserMessage(input.Prompt);
+        if (!context.WebSockets.IsWebSocketRequest)
+        {
+            return Results.BadRequest();
+        }
         
-        var result = await chatCompletionService.GetChatMessageContentAsync(
-            history,
-            executionSettings: openAiPromptExecutionSettings,
-            kernel: kernel);
+        using var webSocket = await context.WebSockets.AcceptWebSocketAsync();
         
-        history.AddMessage(result.Role, result.Content ?? string.Empty);
+        var buffer = new byte[4096];
         
-        return Results.Ok(result.Content);
+        while (true)
+        {
+            var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+            
+            if (result.MessageType == WebSocketMessageType.Close)
+            {
+                await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None);
+                break;
+            }
+
+            var message = Encoding.UTF8.GetString(buffer, 0, result.Count);
+            history.AddUserMessage(message);
+        
+            var stream = chatCompletionService.GetStreamingChatMessageContentsAsync(
+                history,
+                executionSettings: openAiPromptExecutionSettings,
+                kernel: kernel);
+
+            AuthorRole? role = null;
+        
+            await foreach (var chunk in stream)
+            {
+                if (chunk.Role != null)
+                {
+                    role = chunk.Role;
+                }
+
+                if (role == null)
+                {
+                    throw new Exception();
+                }
+
+                var content = chunk.Content ?? string.Empty;
+                history.AddMessage((AuthorRole)role, content);
+                
+                var bytes = Encoding.UTF8.GetBytes(content);
+                
+                await webSocket.SendAsync(
+                    new ArraySegment<byte>(bytes),
+                    WebSocketMessageType.Text,
+                    endOfMessage: true,
+                    cancellationToken: CancellationToken.None
+                );
+            }
+        }
+        
+        return Results.Ok();
     })
     .WithName("Prompt");
 
 app.Run();
-
-internal class PromptInput(string prompt)
-{
-    public string Prompt { get; } = prompt;
-}

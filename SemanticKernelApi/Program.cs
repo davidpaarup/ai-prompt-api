@@ -104,16 +104,11 @@ app.Map("/ws/prompt", async (HttpContext context) =>
 
                 var content = chunk.Content ?? string.Empty;
                 history.AddMessage((AuthorRole)role, content);
-                
-                var bytes = Encoding.UTF8.GetBytes(content);
-                
-                await webSocket.SendAsync(
-                    new ArraySegment<byte>(bytes),
-                    WebSocketMessageType.Text,
-                    endOfMessage: true,
-                    cancellationToken: CancellationToken.None
-                );
+
+                await SendChunkAsync(content, webSocket);
             }
+            
+            await SendChunkAsync("[DONE]", webSocket);
         }
         
         return Results.Ok();
@@ -121,3 +116,16 @@ app.Map("/ws/prompt", async (HttpContext context) =>
     .WithName("Prompt");
 
 app.Run();
+return;
+
+Task SendChunkAsync(string message, WebSocket webSocket)
+{
+    var bytes = Encoding.UTF8.GetBytes(message);
+                
+    return webSocket.SendAsync(
+        new ArraySegment<byte>(bytes),
+        WebSocketMessageType.Text,
+        endOfMessage: true,
+        cancellationToken: CancellationToken.None
+    );
+}

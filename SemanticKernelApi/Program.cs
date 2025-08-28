@@ -1,5 +1,4 @@
-using System.Net.WebSockets;
-using System.Text;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
@@ -59,73 +58,41 @@ OpenAIPromptExecutionSettings openAiPromptExecutionSettings = new() 
 
 var history = new ChatHistory();
 
-app.Map("/ws/prompt", async (HttpContext context) =>
+app.MapPost("/prompt", async (HttpContext context, [FromBody] PromptInput payload) =>
+{
+    history.AddUserMessage(payload.Message);
+
+    var stream = chatCompletionService.GetStreamingChatMessageContentsAsync(
+        history,
+        executionSettings: openAiPromptExecutionSettings,
+        kernel: kernel);
+
+    AuthorRole? role = null;
+    
+    await foreach (var chunk in stream)
     {
-        if (!context.WebSockets.IsWebSocketRequest)
+        if (chunk.Role != null)
         {
-            return Results.BadRequest();
+            role = chunk.Role;
         }
-        
-        using var webSocket = await context.WebSockets.AcceptWebSocketAsync();
-        
-        var buffer = new byte[4096];
-        
-        while (true)
+
+        if (role == null)
         {
-            var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
-            
-            if (result.MessageType == WebSocketMessageType.Close)
-            {
-                await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None);
-                break;
-            }
-
-            var message = Encoding.UTF8.GetString(buffer, 0, result.Count);
-            history.AddUserMessage(message);
-        
-            var stream = chatCompletionService.GetStreamingChatMessageContentsAsync(
-                history,
-                executionSettings: openAiPromptExecutionSettings,
-                kernel: kernel);
-
-            AuthorRole? role = null;
-        
-            await foreach (var chunk in stream)
-            {
-                if (chunk.Role != null)
-                {
-                    role = chunk.Role;
-                }
-
-                if (role == null)
-                {
-                    throw new Exception();
-                }
-
-                var content = chunk.Content ?? string.Empty;
-                history.AddMessage((AuthorRole)role, content);
-
-                await SendChunkAsync(content, webSocket);
-            }
-            
-            await SendChunkAsync("[DONE]", webSocket);
+            throw new Exception();
         }
+
+        var content = chunk.Content ?? string.Empty;
+        history.AddMessage((AuthorRole)role, content);
         
-        return Results.Ok();
-    })
-    .WithName("Prompt");
+        await context.Response.WriteAsync(content);
+        await context.Response.Body.FlushAsync();
+    }
+})
+.WithName("Prompt");
 
 app.Run();
-return;
 
-Task SendChunkAsync(string message, WebSocket webSocket)
+internal class PromptInput(string message)
 {
-    var bytes = Encoding.UTF8.GetBytes(message);
-                
-    return webSocket.SendAsync(
-        new ArraySegment<byte>(bytes),
-        WebSocketMessageType.Text,
-        endOfMessage: true,
-        cancellationToken: CancellationToken.None
-    );
+    public string Message { get; } = message;
 }

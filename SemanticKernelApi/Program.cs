@@ -1,7 +1,12 @@
+using Grafana.OpenTelemetry;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
+using OpenTelemetry.Logs;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using SemanticKernelApi;
 using SemanticKernelApi.Plugins;
 
@@ -20,6 +25,32 @@ builder.Services.AddCors(options =>
             .AllowAnyMethod();
     });
 });
+
+const string serviceName = "semantic-kernel-api";
+
+builder.Logging.AddOpenTelemetry(options =>
+{
+    options
+        .SetResourceBuilder(
+            ResourceBuilder.CreateDefault()
+                .AddService(serviceName))
+        .AddConsoleExporter()
+        .AddOtlpExporter()
+        .UseGrafana();
+});
+
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(resource => resource.AddService(serviceName))
+    .WithTracing(tracing => tracing
+        .AddAspNetCoreInstrumentation()
+        .AddConsoleExporter()
+        .AddOtlpExporter()
+        .UseGrafana())
+    .WithMetrics(metrics => metrics
+        .AddAspNetCoreInstrumentation()
+        .AddConsoleExporter()
+        .AddOtlpExporter()
+        .UseGrafana());
 
 var app = builder.Build();
 

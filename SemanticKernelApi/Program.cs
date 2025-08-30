@@ -115,7 +115,7 @@ app.MapPost("/prompt", async (HttpContext context, [FromBody] PromptInput payloa
         var content = chunk.Content ?? string.Empty;
         history.AddMessage((AuthorRole)role, content);
         
-        await context.Response.WriteAsync("a" + content);
+        await context.Response.WriteAsync(content);
         await context.Response.Body.FlushAsync();
     }
 })

@@ -7,7 +7,7 @@ FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 
 # Publish the app
 FROM build AS publish
-RUN dotnet publish "SemanticKernelApi.csproj" -c Release -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "SemanticKernelApi/SemanticKernelApi.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
 # Build runtime image
 FROM base AS final

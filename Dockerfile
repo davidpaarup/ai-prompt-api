@@ -5,10 +5,10 @@ EXPOSE 8080
 
 # Use the SDK image to build the app
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
-WORKDIR /SemanticKernelApi
+WORKDIR /src
 
 # Copy csproj and restore dependencies
-COPY ["SemanticKernelApi.csproj", "./"]
+COPY ["SemanticKernelApi/SemanticKernelApi.csproj", "./"]
 RUN dotnet restore "SemanticKernelApi.csproj"
 
 # Copy everything else and build

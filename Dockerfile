@@ -1,19 +1,9 @@
 # Use the official .NET runtime as a parent image
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
-WORKDIR /app
 EXPOSE 8080
 
 # Use the SDK image to build the app
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
-WORKDIR /src
-
-# Copy csproj and restore dependencies
-COPY ["SemanticKernelApi/SemanticKernelApi.csproj", "./"]
-RUN dotnet restore "SemanticKernelApi.csproj"
-
-# Copy everything else and build
-COPY . .
-RUN dotnet build "SemanticKernelApi.csproj" -c Release -o /app/build
 
 # Publish the app
 FROM build AS publish

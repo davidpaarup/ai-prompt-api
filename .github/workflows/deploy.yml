@@ -1,20 +1,22 @@
-name: Deploy .NET API to Azure App Service
+name: Deploy .NET API to Azure Container Apps
 
 on:
   push:
     branches: [ main ]
 
 env:
-  AZURE_WEBAPP_NAME: app-250827175950  
-  AZURE_WEBAPP_PACKAGE_PATH: '.'       
-  DOTNET_VERSION: '9.0.x'     
+  AZURE_CONTAINER_REGISTRY: testregistrypaarup.azurecr.io 
+  AZURE_CONTAINER_APP: semantic-kernel-api
+  AZURE_RESOURCE_GROUP: ia-project
+  AZURE_CONTAINER_ENVIRONMENT: semantic-kernel-api-env
+  IMAGE_NAME: semantic-kernel-api                     
+  DOTNET_VERSION: '9.0.x'                        
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     environment:
       name: 'Production'
-      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
     
     steps:
     - name: Checkout code
@@ -34,14 +36,47 @@ jobs:
     - name: Run tests
       run: dotnet test --no-build --configuration Release --verbosity normal
 
-    - name: Publish application
-      run: dotnet publish -c Release -o ./publish
-
-    - name: Deploy to Azure Web App
-      id: deploy-to-webapp
-      uses: azure/webapps-deploy@v3
+    - name: Login to Azure
+      uses: azure/login@v2
       with:
-        app-name: ${{ env.AZURE_WEBAPP_NAME }}
-        slot-name: 'Production'
-        publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-        package: ./publish
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Login to Azure Container Registry
+      run: |
+        az acr login --name ${{ env.AZURE_CONTAINER_REGISTRY }}
+
+    - name: Build and push Docker image
+      run: |
+        # Build the Docker image
+        docker build -t ${{ env.AZURE_CONTAINER_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }} .
+        docker build -t ${{ env.AZURE_CONTAINER_REGISTRY }}/${{ env.IMAGE_NAME }}:latest .
+        
+        # Push the Docker image
+        docker push ${{ env.AZURE_CONTAINER_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+        docker push ${{ env.AZURE_CONTAINER_REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+
+    - name: Deploy to Azure Container Apps
+      run: |
+        az containerapp update \
+          --name ${{ env.AZURE_CONTAINER_APP }} \
+          --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+          --image ${{ env.AZURE_CONTAINER_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+
+    - name: Get Container App URL
+      id: get-url
+      run: |
+        FQDN=$(az containerapp show \
+          --name ${{ env.AZURE_CONTAINER_APP }} \
+          --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+          --query properties.configuration.ingress.fqdn \
+          --output tsv)
+        echo "CONTAINER_APP_URL=https://$FQDN" >> $GITHUB_OUTPUT
+        echo "Container App URL: https://$FQDN"
+
+    - name: Output deployment summary
+      run: |
+        echo "## Deployment Summary :rocket:" >> $GITHUB_STEP_SUMMARY
+        echo "- **Container App**: ${{ env.AZURE_CONTAINER_APP }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Image**: ${{ env.AZURE_CONTAINER_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **URL**: ${{ steps.get-url.outputs.CONTAINER_APP_URL }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Resource Group**: ${{ env.AZURE_RESOURCE_GROUP }}" >> $GITHUB_STEP_SUMMARY

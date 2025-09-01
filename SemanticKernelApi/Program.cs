@@ -89,6 +89,8 @@ OpenAIPromptExecutionSettings openAiPromptExecutionSettings = new() 
 
 var history = new ChatHistory();
 
+app.MapGet("/", () => "Semantic Kernel API is running.");
+
 app.MapPost("/prompt", async (HttpContext context, [FromBody] PromptInput payload) =>
 {
     history.AddUserMessage(payload.Message);

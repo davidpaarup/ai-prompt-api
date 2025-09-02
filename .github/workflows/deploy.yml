@@ -57,26 +57,16 @@ jobs:
 
     - name: Deploy to Azure Container Apps
       run: |
+
+        ACR_USERNAME=$(az keyvault secret show --vault-name semantic-kernel-api-kv --name "ACR--Username" --query value -o tsv)
+        ACR_PASSWORD=$(az keyvault secret show --vault-name semantic-kernel-api-kv --name "ACR--Password" --query value -o tsv)
+
         az containerapp update \
           --name ${{ env.AZURE_CONTAINER_APP }} \
           --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
           --image ${{ env.AZURE_CONTAINER_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          --registry-server ${{ env.AZURE_CONTAINER_REGISTRY }} \
+          --registry-username $ACR_USERNAME \
+          --registry-password $ACR_PASSWORD
 
-    - name: Get Container App URL
-      id: get-url
-      run: |
-        FQDN=$(az containerapp show \
-          --name ${{ env.AZURE_CONTAINER_APP }} \
-          --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
-          --query properties.configuration.ingress.fqdn \
-          --output tsv)
-        echo "CONTAINER_APP_URL=https://$FQDN" >> $GITHUB_OUTPUT
-        echo "Container App URL: https://$FQDN"
-
-    - name: Output deployment summary
-      run: |
-        echo "## Deployment Summary :rocket:" >> $GITHUB_STEP_SUMMARY
-        echo "- **Container App**: ${{ env.AZURE_CONTAINER_APP }}" >> $GITHUB_STEP_SUMMARY
-        echo "- **Image**: ${{ env.AZURE_CONTAINER_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
-        echo "- **URL**: ${{ steps.get-url.outputs.CONTAINER_APP_URL }}" >> $GITHUB_STEP_SUMMARY
-        echo "- **Resource Group**: ${{ env.AZURE_RESOURCE_GROUP }}" >> $GITHUB_STEP_SUMMARY
+ 

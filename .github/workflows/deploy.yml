@@ -5,11 +5,11 @@ on:
     branches: [ main ]
 
 env:
-  AZURE_CONTAINER_REGISTRY: testregistrypaarup.azurecr.io 
-  AZURE_CONTAINER_APP: semantic-kernel-api
-  AZURE_RESOURCE_GROUP: ai-project
-  AZURE_CONTAINER_ENVIRONMENT: semantic-kernel-api-env
-  IMAGE_NAME: semantic-kernel-api                     
+  AZURE_CONTAINER_REGISTRY: davidpaarup.azurecr.io 
+  AZURE_CONTAINER_APP: ai-prompt-api
+  AZURE_RESOURCE_GROUP: ai-prompt
+  AZURE_CONTAINER_ENVIRONMENT: ai-prompt-api-env
+  IMAGE_NAME: ai-prompt-api                   
   DOTNET_VERSION: '9.0.x'                        
 
 jobs:

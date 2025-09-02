@@ -56,7 +56,7 @@ jobs:
         ACR_USERNAME=$(az keyvault secret show --vault-name semantic-kernel-api-kv --name "ACR--Username" --query value -o tsv)
         ACR_PASSWORD=$(az keyvault secret show --vault-name semantic-kernel-api-kv --name "ACR--Password" --query value -o tsv)
         az containerapp registry set --name ${{ env.AZURE_CONTAINER_APP }} --resource-group ${{ env.AZURE_RESOURCE_GROUP }} --server ${{ env.AZURE_CONTAINER_REGISTRY }} --username $ACR_USERNAME --password $ACR_PASSWORD
-    
+    #
     - name: Deploy to Azure Container Apps
       run: |
         az containerapp update \

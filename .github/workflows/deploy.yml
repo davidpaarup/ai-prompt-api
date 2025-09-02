@@ -65,7 +65,7 @@ jobs:
           --name ${{ env.AZURE_CONTAINER_APP }} \  
           --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \  
           --server ${{ env.AZURE_CONTAINER_REGISTRY }} \
-          --username t$ACR_USERNAME \
+          --username $ACR_USERNAME \
           --password $ACR_PASSWORD
 
         az containerapp update \

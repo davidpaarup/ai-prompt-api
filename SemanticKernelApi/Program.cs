@@ -54,7 +54,6 @@ builder.Services.AddOpenTelemetry()
 
 var app = builder.Build();
 
-app.UseWebSockets();
 app.UseCors("AllowFrontend");
 
 if (app.Environment.IsDevelopment())

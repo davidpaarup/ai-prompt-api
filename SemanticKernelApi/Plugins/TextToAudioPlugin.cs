@@ -11,6 +11,12 @@ public class TextToAudioPlugin(IConfiguration configuration)
     private async Task<byte[]> ConvertTextToAudioAsync()
     {
         var key = configuration["ConfigCatKey"];
+
+        if (key == null)
+        {
+            throw new Exception("Config cat configuration is missing");
+        }
+        
         var client = ConfigCatClient.Get(key);
         
         var isTextToAudioEnabled = await client.GetValueAsync("isTextToAudioEnabled", false);

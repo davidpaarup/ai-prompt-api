@@ -80,6 +80,7 @@ var chatCompletionService = kernel.GetRequiredService<IChatCompletionService>();
 kernel.Plugins.AddFromType<CalendarPlugin>("calendar", app.Services);
 kernel.Plugins.AddFromType<MailPlugin>("mail", app.Services);
 kernel.Plugins.AddFromType<OneDrivePlugin>("oneDrive", app.Services);
+kernel.Plugins.AddFromType<TextToAudioPlugin>("textToAudio", app.Services);
 
 OpenAIPromptExecutionSettings openAiPromptExecutionSettings = new() 
 {

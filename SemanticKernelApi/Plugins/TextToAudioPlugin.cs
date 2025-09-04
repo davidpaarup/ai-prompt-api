@@ -17,7 +17,10 @@ public class TextToAudioPlugin(IConfiguration configuration)
             throw new Exception("Config cat configuration is missing");
         }
         
-        var client = ConfigCatClient.Get(key);
+        var client = ConfigCatClient.Get(key, options =>
+        {
+            options.PollingMode = PollingModes.LazyLoad();
+        });
         
         var isTextToAudioEnabled = await client.GetValueAsync("isTextToAudioEnabled", false);
 

@@ -9,10 +9,10 @@ WORKDIR /src
 
 # Publish the app
 FROM build AS publish
-COPY ["SemanticKernelApi/SemanticKernelApi.csproj", "./"]
-RUN dotnet restore "SemanticKernelApi.csproj"
-COPY ["SemanticKernelApi/", "./"]
-RUN dotnet publish "SemanticKernelApi.csproj" -c Release -o /app/publish
+COPY ["AiPromptApi/AiPromptApi.csproj", "./"]
+RUN dotnet restore "AiPromptApi.csproj"
+COPY ["AiPromptApi/", "./"]
+RUN dotnet publish "AiPromptApi.csproj" -c Release -o /app/publish
 
 # Build runtime image
 FROM base AS final
@@ -23,4 +23,4 @@ COPY --from=publish /app/publish .
 RUN adduser --disabled-password --gecos '' appuser && chown -R appuser /app
 USER appuser
 
-ENTRYPOINT ["dotnet", "SemanticKernelApi.dll"]
+ENTRYPOINT ["dotnet", "AiPromptApi.dll"]

@@ -18,7 +18,6 @@ public class TextToAudioPlugin(IConfiguration configuration)
         }
         
         var client = ConfigCatClient.Get(key);
-        await client.ForceRefreshAsync();
         
         var isTextToAudioEnabled = await client.GetValueAsync("isTextToAudioEnabled", false);
 

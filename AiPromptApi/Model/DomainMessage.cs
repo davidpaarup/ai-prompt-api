@@ -1,4 +1,4 @@
-namespace SemanticKernelApi.Model;
+namespace AiPromptApi.Model;
 
 public class DomainMessage(string title, string body)
 {

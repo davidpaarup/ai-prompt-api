@@ -1,4 +1,4 @@
-namespace SemanticKernelApi.Model;
+namespace AiPromptApi.Model;
 
 public class DomainEvent(string start, string end, string subject)
 {

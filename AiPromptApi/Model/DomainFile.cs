@@ -1,4 +1,4 @@
-namespace SemanticKernelApi.Model;
+namespace AiPromptApi.Model;
 
 public class DomainFile(string fileId, string name)
 {

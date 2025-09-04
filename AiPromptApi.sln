@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SemanticKernelApi", "SemanticKernelApi\SemanticKernelApi.csproj", "{B4AF3BBC-5038-448E-A4D1-9F6210E4AE76}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AiPromptApi", "AiPromptApi\AiPromptApi.csproj", "{B4AF3BBC-5038-448E-A4D1-9F6210E4AE76}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

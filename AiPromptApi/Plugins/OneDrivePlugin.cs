@@ -1,8 +1,8 @@
 using System.ComponentModel;
+using AiPromptApi.Model;
 using Microsoft.SemanticKernel;
-using SemanticKernelApi.Model;
 
-namespace SemanticKernelApi.Plugins;
+namespace AiPromptApi.Plugins;
 
 public class OneDrivePlugin
 {

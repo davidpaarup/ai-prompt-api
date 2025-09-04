@@ -1,4 +1,4 @@
-namespace SemanticKernelApi;
+namespace AiPromptApi;
 
 public class GraphClientFactory(IConfiguration configuration, IHttpContextAccessor httpContextAccessor)
 {

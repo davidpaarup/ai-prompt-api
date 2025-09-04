@@ -7,8 +7,8 @@ using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
-using SemanticKernelApi;
-using SemanticKernelApi.Plugins;
+using AiPromptApi;
+using AiPromptApi.Plugins;
 
 var builder = WebApplication.CreateBuilder(args);
 

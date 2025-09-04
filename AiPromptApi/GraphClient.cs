@@ -1,11 +1,11 @@
+using AiPromptApi.Model;
 using Microsoft.Graph;
 using Azure.Identity;
 using Microsoft.Graph.Me.SendMail;
 using Microsoft.Graph.Models;
 using Microsoft.Kiota.Abstractions;
-using SemanticKernelApi.Model;
 
-namespace SemanticKernelApi;
+namespace AiPromptApi;
 
 public class GraphClient
 {

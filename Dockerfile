@@ -19,8 +19,4 @@ FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
 
-# Create a non-privileged user that the app will run under
-RUN adduser --disabled-password --gecos '' appuser && chown -R appuser /app
-USER appuser
-
 ENTRYPOINT ["dotnet", "AiPromptApi.dll"]

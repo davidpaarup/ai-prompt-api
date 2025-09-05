@@ -83,7 +83,6 @@ builder.Logging.AddOpenTelemetry(options =>
         .SetResourceBuilder(
             ResourceBuilder.CreateDefault()
                 .AddService(serviceName))
-        .AddConsoleExporter()
         .AddOtlpExporter()
         .UseGrafana();
 });
@@ -92,12 +91,10 @@ builder.Services.AddOpenTelemetry()
     .ConfigureResource(resource => resource.AddService(serviceName))
     .WithTracing(tracing => tracing
         .AddAspNetCoreInstrumentation()
-        .AddConsoleExporter()
         .AddOtlpExporter()
         .UseGrafana())
     .WithMetrics(metrics => metrics
         .AddAspNetCoreInstrumentation()
-        .AddConsoleExporter()
         .AddOtlpExporter()
         .UseGrafana());
 

@@ -109,32 +109,43 @@ public class GraphClient
 
     public async Task<IEnumerable<DomainFile>> GetOneDriveItemsAsync()
     {
+        Console.WriteLine("Starting GetOneDriveItemsAsync");
+        
         var drive = await _client.Me
             .Drive.GetAsync(ItemsConfiguration);
         
         if (drive == null)
         {
+            Console.WriteLine("Drive is null");
             throw new Exception();
         }
+        
+        Console.WriteLine($"Retrieved drive with ID: {drive.Id}");
         
         var items = await _client.Drives[drive.Id]
             .Items["root"].Children.GetAsync(ItemConfiguration);
 
         if (items?.Value == null)
         {
+            Console.WriteLine("Items or Items.Value is null");
             throw new Exception();
         }
+        
+        Console.WriteLine($"Retrieved {items.Value.Count} items from OneDrive");
         
         var result = items.Value.Select(v =>
         {
             if (v.Id == null || v.Name == null)
             {
+                Console.WriteLine($"Item with null ID or Name found");
                 throw new Exception();
             }
             
+            Console.WriteLine($"Processing item: {v.Name} (ID: {v.Id})");
             return new DomainFile(v.Id, v.Name);
         });
 
+        Console.WriteLine("GetOneDriveItemsAsync completed successfully");
         return result;
         
         void ItemsConfiguration(RequestConfiguration<Microsoft.Graph.Me.Drive.DriveRequestBuilder

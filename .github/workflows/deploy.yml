@@ -4,6 +4,10 @@ on:
   push:
     branches: [ main ]
 
+concurrency:
+  group: single-run
+  cancel-in-progress: false
+
 env:
   AZURE_CONTAINER_REGISTRY: davidpaarup.azurecr.io 
   AZURE_CONTAINER_APP: ai-prompt-api

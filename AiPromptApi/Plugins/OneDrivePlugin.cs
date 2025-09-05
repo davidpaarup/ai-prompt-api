@@ -4,27 +4,59 @@ using Microsoft.SemanticKernel;
 
 namespace AiPromptApi.Plugins;
 
-public class OneDrivePlugin
+public class OneDrivePlugin(GraphClientFactory graphClientFactory)
 {
-    private readonly GraphClient _graphClient;
-        
-    public OneDrivePlugin(GraphClientFactory graphClientFactory)
-    {
-        IEnumerable<string> scopes = ["files.read", "files.read.all"];
-        _graphClient = graphClientFactory.Create(scopes);
-    }
-
     [KernelFunction("fetch_file_names_and_ids_on_root")]
     [Description("Fetches the file names and IDs in a Drive root")]
-    private Task<IEnumerable<DomainFile>> FetchNumberOfFilesAsync()
+    private async Task<IEnumerable<DomainFile>> FetchNumberOfFilesAsync()
     {
-        return _graphClient.GetOneDriveItemsAsync();
+        var client = await graphClientFactory.CreateAsync();
+        
+        var drive = await client.Me
+            .Drive.GetAsync();
+        
+        if (drive == null)
+        {
+            throw new Exception();
+        }
+        
+        var items = await client.Drives[drive.Id]
+            .Items["root"].Children.GetAsync();
+
+        if (items?.Value == null)
+        {
+            throw new Exception();
+        }
+        
+        var result = items.Value.Select(v =>
+        {
+            if (v.Id == null || v.Name == null)
+            {
+                throw new Exception();
+            }
+            
+            return new DomainFile(v.Id, v.Name);
+        });
+
+        return result;
     }
     
     [KernelFunction("fetch_content_of_file")]
     [Description("Fetches the content of a file, given the file ID")]
-    private Task<string> FetchNumberOfFilesAsync(string fileId)
+    private async Task<string> FetchNumberOfFilesAsync(string fileId)
     {
-        return _graphClient.GetFileContentAsync(fileId);
+        var split = fileId.Split('!');
+        var driveId = split[0];
+
+        var client = await graphClientFactory.CreateAsync();
+        var content = await client.Drives[driveId].Items[fileId].Content.GetAsync();
+
+        if (content == null)
+        {
+            throw new Exception();
+        }
+
+        using var reader = new StreamReader(content);
+        return await reader.ReadToEndAsync();
     }
 }

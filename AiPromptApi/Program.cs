@@ -11,9 +11,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
-builder.Services.AddSingleton<GraphClientFactory>();
+builder.Services.AddScoped<GraphClientFactory>();
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddSingleton<IAccountRepository, AccountRepository>();
+builder.Services.AddScoped<IAccountRepository, AccountRepository>();
 
 var issuer = builder.Configuration["Issuer"];
 

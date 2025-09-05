@@ -9,12 +9,65 @@ using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using AiPromptApi;
 using AiPromptApi.Plugins;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+
+async Task<IEnumerable<SecurityKey>> GetSigningKeysFromJwks(string? kid, string issuer)
+{
+    var jwksUrl = $"{issuer}/api/auth/jwks";
+    
+    using var httpClient = new HttpClient();
+    var response = await httpClient.GetStringAsync(jwksUrl);
+    
+    var jwks = new JsonWebKeySet(response);
+
+    if (string.IsNullOrEmpty(kid))
+    {
+        return jwks.Keys;
+    }
+        
+    var key = jwks.Keys.FirstOrDefault(k => k.Kid == kid);
+
+    if (key == null)
+    {
+        return jwks.Keys;
+    }
+            
+    return [key];
+}
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
 builder.Services.AddSingleton<GraphClientFactory>();
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddSingleton<IAccountRepository, AccountRepository>();
+
+var issuer = builder.Configuration["Issuer"];
+
+if (issuer == null)
+{
+    throw new Exception();
+}
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidAlgorithms = [SecurityAlgorithms.EcdsaSha256],
+            
+            IssuerSigningKeyResolver = (_, _, kid, _) => 
+                GetSigningKeysFromJwks(kid, issuer).GetAwaiter().GetResult()
+        };
+        
+    });
+
+builder.Services.AddAuthorization();
 
 builder.Services.AddCors(options =>
 {
@@ -121,6 +174,7 @@ app.MapPost("/prompt", async (HttpContext context, [FromBody] PromptInput payloa
         await context.Response.Body.FlushAsync();
     }
 })
+.RequireAuthorization()
 .WithName("Prompt");
 
 app.Run();

@@ -1,3 +1,5 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using AiPromptApi.Model;
 using Microsoft.Graph;
 using Azure.Identity;
@@ -11,27 +13,77 @@ public class GraphClient
 {
     private readonly GraphServiceClient _client;
     private readonly IHttpContextAccessor _httpContextAccessor;
-    
-    public GraphClient(IEnumerable<string> scopes, IConfiguration config, IHttpContextAccessor httpContextAccessor)
-    {   
-        var cred = new ClientSecretCredential(
-            config["tenantId"], config["ClientId"], config["ClientSecret"]);
-        
-        _client = new GraphServiceClient(cred, scopes);
-        _httpContextAccessor = httpContextAccessor;
-    }
+    private readonly IAccountRepository _accountRepository;
+    private readonly string _clientId;
+    private readonly string _clientSecret;
+    private readonly IEnumerable<string> _scopes;
 
-    private string GetAccessToken()
+    public GraphClient(IEnumerable<string> scopes, IConfiguration config, IHttpContextAccessor httpContextAccessor,
+        IAccountRepository accountRepository)
     {
-        var authHeader = _httpContextAccessor.HttpContext?.Request.Headers.Authorization.ToString();
-        var accessToken = authHeader?.Replace("Bearer ", "");
+        var clientId = config["clientId"];
+        var clientSecret = config["clientSecret"];
+        var tenantId = config["tenantId"];
 
-        if (accessToken == null)
+        if (clientId == null || clientSecret == null || tenantId == null)
         {
-            throw new UnauthorizedAccessException();
+            throw new Exception();
         }
 
-        return accessToken;
+        _clientId = clientId;
+        _clientSecret = clientSecret;
+        
+        var enumerable = scopes as string[] ?? scopes.ToArray();
+        _scopes = enumerable;
+
+        var cred = new ClientSecretCredential(
+            tenantId, _clientId, _clientSecret);
+        
+        _client = new GraphServiceClient(cred, enumerable);
+        _httpContextAccessor = httpContextAccessor;
+        _accountRepository = accountRepository;
+    }
+    
+    private async Task<string> GetAccessTokenAsync()
+    {
+        if (_httpContextAccessor.HttpContext == null)
+        {
+            throw new Exception();
+        }
+        
+        var userId = _httpContextAccessor.HttpContext.User.Claims.Single(c => c.Type == "id").Value;
+        var refreshToken = await _accountRepository.GetRefreshTokenAsync(userId, "microsoft");
+        const string tokenEndpoint = "https://login.microsoftonline.com/common/oauth2/v2.0/token";
+
+        var parameters = new Dictionary<string, string>
+        {
+            {"grant_type", "refresh_token"},
+            {"refresh_token", refreshToken},
+            {"client_id", _clientId},
+            {"client_secret", _clientSecret},
+            {"scope", string.Join(" ", _scopes)}
+        };
+
+        var content = new FormUrlEncodedContent(parameters);
+
+        using var client = new HttpClient();
+        var response = await client.PostAsync(tokenEndpoint, content);
+        var jsonResponse = await response.Content.ReadAsStringAsync();
+
+        var tokenResponse = JsonSerializer.Deserialize<TokenResponse>(jsonResponse);
+
+        if (tokenResponse == null)
+        {
+            throw new Exception();
+        }
+        
+        return tokenResponse.AccessToken;
+    }
+
+    public class TokenResponse(string accessToken)
+    {
+        [JsonPropertyName("access_token")] 
+        public string AccessToken { get; set; } = accessToken;
     }
 
     public async Task<string> GetFileContentAsync(string fileId)
@@ -39,9 +91,9 @@ public class GraphClient
         var split = fileId.Split('!');
         var driveId = split[0];
         
-        var content = await _client.Drives[driveId].Items[fileId].Content.GetAsync(config =>
+        var content = await _client.Drives[driveId].Items[fileId].Content.GetAsync(async void (config) =>
         {
-            var accessToken = GetAccessToken();
+            var accessToken = await GetAccessTokenAsync();
             config.Headers.Add("Authorization", accessToken);
         });
     
@@ -90,7 +142,7 @@ public class GraphClient
             
             requestConfiguration)
         {
-            var accessToken = GetAccessToken();
+            var accessToken = GetAccessTokenAsync().GetAwaiter().GetResult();
             requestConfiguration.Headers.Add("Authorization", accessToken);
         }
         
@@ -99,7 +151,7 @@ public class GraphClient
             
             requestConfiguration)
         {
-            var accessToken = GetAccessToken();
+            var accessToken = GetAccessTokenAsync().GetAwaiter().GetResult();
             requestConfiguration.Headers.Add("Authorization", accessToken);
         }
     }
@@ -138,7 +190,7 @@ public class GraphClient
         void Configuration(RequestConfiguration<DefaultQueryParameters>
             requestConfiguration)
         {
-            var accessToken = GetAccessToken();
+            var accessToken = GetAccessTokenAsync().GetAwaiter().GetResult();
             requestConfiguration.Headers.Add("Authorization", accessToken);
         }
     }
@@ -148,12 +200,12 @@ public class GraphClient
         var messagePage = await _client.Me
             .MailFolders["Inbox"]
             .Messages
-            .GetAsync(config =>
+            .GetAsync(async void (config) =>
             {
                 config.QueryParameters.Select = ["from", "isRead", "receivedDateTime", "subject"];
                 config.QueryParameters.Top = 25;
                 config.QueryParameters.Orderby = ["receivedDateTime DESC"];
-                var accessToken = GetAccessToken();
+                var accessToken = await GetAccessTokenAsync();
                 config.Headers.Add("Authorization", accessToken);
             });
 
@@ -187,11 +239,11 @@ public class GraphClient
         try
         {
             var events = await _client.Me.Calendar.Events
-                .GetAsync(requestConfiguration =>
+                .GetAsync(async void (requestConfiguration) =>
                 {
                     requestConfiguration.QueryParameters.Filter = $"start/dateTime ge '{startOfMonth:yyyy-MM-ddTHH:mm:ss.fffK}' and end/dateTime le '{endOfMonth:yyyy-MM-ddTHH:mm:ss.fffK}'";
                     requestConfiguration.QueryParameters.Orderby = ["start/dateTime"];
-                    var accessToken = GetAccessToken();
+                    var accessToken = await GetAccessTokenAsync();
                     requestConfiguration.Headers.Add("Authorization", accessToken);
                 });
 

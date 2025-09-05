@@ -31,8 +31,9 @@ public class GraphClientFactory(IConfiguration configuration, IHttpContextAccess
     {
         var clientId = configuration["ClientId"];
         var clientSecret = configuration["ClientSecret"];
+        var tenantId = configuration["TenantId"];
         
-        if (httpContextAccessor.HttpContext == null || clientId == null || clientSecret == null)
+        if (httpContextAccessor.HttpContext == null || clientId == null || clientSecret == null || tenantId == null)
         {
             throw new Exception();
         }
@@ -40,7 +41,7 @@ public class GraphClientFactory(IConfiguration configuration, IHttpContextAccess
         var userId = httpContextAccessor.HttpContext.User.Claims.Single(c => c.Type == "id").Value;
         var refreshToken = await accountRepository.GetRefreshTokenAsync(userId, "microsoft");
         
-        const string tokenEndpoint = "https://login.microsoftonline.com/common/oauth2/v2.0/token";
+        var tokenEndpoint = $"https://login.microsoftonline.com/{tenantId}/oauth2/v2.0/token";
 
         IEnumerable<string> scopes =
         [

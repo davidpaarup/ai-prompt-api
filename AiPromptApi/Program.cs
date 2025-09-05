@@ -7,30 +7,6 @@ using AiPromptApi;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 
-async Task<IEnumerable<SecurityKey>> GetSigningKeysFromJwks(string? kid, string issuer)
-{
-    var jwksUrl = $"{issuer}/api/auth/jwks";
-    
-    using var httpClient = new HttpClient();
-    var response = await httpClient.GetStringAsync(jwksUrl);
-    
-    var jwks = new JsonWebKeySet(response);
-
-    if (string.IsNullOrEmpty(kid))
-    {
-        return jwks.Keys;
-    }
-        
-    var key = jwks.Keys.FirstOrDefault(k => k.Kid == kid);
-
-    if (key == null)
-    {
-        return jwks.Keys;
-    }
-            
-    return [key];
-}
-
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
@@ -75,7 +51,7 @@ builder.Services.AddCors(options =>
     });
 });
 
-const string serviceName = "semantic-kernel-api";
+const string serviceName = "ai-prompt-api";
 
 builder.Logging.AddOpenTelemetry(options =>
 {
@@ -102,14 +78,35 @@ var app = builder.Build();
 
 app.UseCors("AllowFrontend");
 
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-}
-
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+return;
+
+async Task<IEnumerable<SecurityKey>> GetSigningKeysFromJwks(string? kid, string issuer)
+{
+    var jwksUrl = $"{issuer}/api/auth/jwks";
+    
+    using var httpClient = new HttpClient();
+    var response = await httpClient.GetStringAsync(jwksUrl);
+    
+    var jwks = new JsonWebKeySet(response);
+
+    if (string.IsNullOrEmpty(kid))
+    {
+        return jwks.Keys;
+    }
+        
+    var key = jwks.Keys.FirstOrDefault(k => k.Kid == kid);
+
+    if (key == null)
+    {
+        return jwks.Keys;
+    }
+            
+    return [key];
+}

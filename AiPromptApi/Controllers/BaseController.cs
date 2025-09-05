@@ -17,6 +17,8 @@ public class BaseController(IConfiguration configuration, IServiceProvider servi
         return Ok("Semantic Kernel API is running.");
     }
 
+    //
+    
     [HttpPost("prompt")]
     [Authorize]
     public async Task<IActionResult> Post([FromBody] PromptInput payload)

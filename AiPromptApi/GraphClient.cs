@@ -46,22 +46,16 @@ public class GraphClient
     
     private async Task<string> GetAccessTokenAsync()
     {
-        Console.WriteLine("Starting GetAccessTokenAsync");
-        
         if (_httpContextAccessor.HttpContext == null)
         {
-            Console.WriteLine("HttpContext is null");
             throw new Exception();
         }
         
         var userId = _httpContextAccessor.HttpContext.User.Claims.Single(c => c.Type == "id").Value;
-        Console.WriteLine($"Retrieved userId: {userId}");
         
         var refreshToken = await _accountRepository.GetRefreshTokenAsync(userId, "microsoft");
-        Console.WriteLine($"Retrieved refresh token: {refreshToken?.Substring(0, Math.Min(20, refreshToken.Length))}...");
         
         const string tokenEndpoint = "https://login.microsoftonline.com/common/oauth2/v2.0/token";
-        Console.WriteLine($"Using token endpoint: {tokenEndpoint}");
 
         var parameters = new Dictionary<string, string>
         {
@@ -72,27 +66,20 @@ public class GraphClient
             {"scope", string.Join(" ", _scopes)}
         };
 
-        Console.WriteLine($"Token request parameters: grant_type=refresh_token, client_id={_clientId}, scopes={string.Join(" ", _scopes)}");
-
         var content = new FormUrlEncodedContent(parameters);
 
         using var client = new HttpClient();
-        Console.WriteLine("Making POST request to token endpoint");
         var response = await client.PostAsync(tokenEndpoint, content);
-        Console.WriteLine($"Token response status: {response.StatusCode}");
         
         var jsonResponse = await response.Content.ReadAsStringAsync();
-        Console.WriteLine($"Token response content: {jsonResponse}");
 
         var tokenResponse = JsonSerializer.Deserialize<TokenResponse>(jsonResponse);
 
         if (tokenResponse == null)
         {
-            Console.WriteLine("Failed to deserialize token response");
             throw new Exception();
         }
         
-        Console.WriteLine($"Successfully retrieved access token: {tokenResponse.AccessToken?.Substring(0, Math.Min(20, tokenResponse.AccessToken.Length))}...");
         return tokenResponse.AccessToken;
     }
 
@@ -125,43 +112,32 @@ public class GraphClient
 
     public async Task<IEnumerable<DomainFile>> GetOneDriveItemsAsync()
     {
-        Console.WriteLine("Starting GetOneDriveItemsAsync");
-        
         var drive = await _client.Me
             .Drive.GetAsync(ItemsConfiguration);
         
         if (drive == null)
         {
-            Console.WriteLine("Drive is null");
             throw new Exception();
         }
-        
-        Console.WriteLine($"Retrieved drive with ID: {drive.Id}");
         
         var items = await _client.Drives[drive.Id]
             .Items["root"].Children.GetAsync(ItemConfiguration);
 
         if (items?.Value == null)
         {
-            Console.WriteLine("Items or Items.Value is null");
             throw new Exception();
         }
-        
-        Console.WriteLine($"Retrieved {items.Value.Count} items from OneDrive");
         
         var result = items.Value.Select(v =>
         {
             if (v.Id == null || v.Name == null)
             {
-                Console.WriteLine($"Item with null ID or Name found");
                 throw new Exception();
             }
             
-            Console.WriteLine($"Processing item: {v.Name} (ID: {v.Id})");
             return new DomainFile(v.Id, v.Name);
         });
 
-        Console.WriteLine("GetOneDriveItemsAsync completed successfully");
         return result;
         
         void ItemsConfiguration(RequestConfiguration<Microsoft.Graph.Me.Drive.DriveRequestBuilder
@@ -238,7 +214,6 @@ public class GraphClient
 
         if (messagePage?.Value == null)
         {
-            Console.WriteLine("No results returned.");
             return [];
         }
 
@@ -263,43 +238,23 @@ public class GraphClient
 
         IEnumerable<DomainEvent> calendarEvents = [];
         
-        try
-        {
-            var events = await _client.Me.Calendar.Events
-                .GetAsync(async void (requestConfiguration) =>
-                {
-                    requestConfiguration.QueryParameters.Filter = $"start/dateTime ge '{startOfMonth:yyyy-MM-ddTHH:mm:ss.fffK}' and end/dateTime le '{endOfMonth:yyyy-MM-ddTHH:mm:ss.fffK}'";
-                    requestConfiguration.QueryParameters.Orderby = ["start/dateTime"];
-                    var accessToken = await GetAccessTokenAsync();
-                    requestConfiguration.Headers.Add("Authorization", accessToken);
-                });
+        var events = await _client.Me.Calendar.Events
+            .GetAsync(async void (requestConfiguration) =>
+            {
+                requestConfiguration.QueryParameters.Filter = $"start/dateTime ge '{startOfMonth:yyyy-MM-ddTHH:mm:ss.fffK}' and end/dateTime le '{endOfMonth:yyyy-MM-ddTHH:mm:ss.fffK}'";
+                requestConfiguration.QueryParameters.Orderby = ["start/dateTime"];
+                var accessToken = await GetAccessTokenAsync();
+                requestConfiguration.Headers.Add("Authorization", accessToken);
+            });
 
-            if (events?.Value?.Count > 0)
-            {
-                foreach (var calendarEvent in events.Value)
-                {
-                    var startTime = DateTime.Parse(calendarEvent.Start?.DateTime ?? "").ToString("yyyy-MM-dd HH:mm");
-                    var endTime = DateTime.Parse(calendarEvent.End?.DateTime ?? "").ToString("HH:mm");
-                    var e = new DomainEvent(startTime, endTime, calendarEvent.Subject ?? "");
-                    calendarEvents = calendarEvents.Append(e);
-                    return calendarEvents;
-                }
-            }
-            else
-            {
-                Console.WriteLine("No events found for this month.");
-            }
-        }
-        catch (Exception ex)
+        foreach (var calendarEvent in events.Value)
         {
-            Console.WriteLine($"Error fetching calendar events: {ex.Message}");
-            
-            if (ex.Message.Contains("Forbidden") || ex.Message.Contains("403"))
-            {
-                Console.WriteLine("Make sure your application has the necessary permissions (Calendars.Read) and admin consent has been granted.");
-            }
+            var startTime = DateTime.Parse(calendarEvent.Start?.DateTime ?? "").ToString("yyyy-MM-dd HH:mm");
+            var endTime = DateTime.Parse(calendarEvent.End?.DateTime ?? "").ToString("HH:mm");
+            var e = new DomainEvent(startTime, endTime, calendarEvent.Subject ?? "");
+            calendarEvents = calendarEvents.Append(e);
         }
 
-        throw new Exception();
+        return calendarEvents;
     }
 }

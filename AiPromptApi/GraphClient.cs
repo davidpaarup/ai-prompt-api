@@ -46,14 +46,22 @@ public class GraphClient
     
     private async Task<string> GetAccessTokenAsync()
     {
+        Console.WriteLine("Starting GetAccessTokenAsync");
+        
         if (_httpContextAccessor.HttpContext == null)
         {
+            Console.WriteLine("HttpContext is null");
             throw new Exception();
         }
         
         var userId = _httpContextAccessor.HttpContext.User.Claims.Single(c => c.Type == "id").Value;
+        Console.WriteLine($"Retrieved userId: {userId}");
+        
         var refreshToken = await _accountRepository.GetRefreshTokenAsync(userId, "microsoft");
+        Console.WriteLine($"Retrieved refresh token: {refreshToken?.Substring(0, Math.Min(20, refreshToken.Length))}...");
+        
         const string tokenEndpoint = "https://login.microsoftonline.com/common/oauth2/v2.0/token";
+        Console.WriteLine($"Using token endpoint: {tokenEndpoint}");
 
         var parameters = new Dictionary<string, string>
         {
@@ -64,19 +72,27 @@ public class GraphClient
             {"scope", string.Join(" ", _scopes)}
         };
 
+        Console.WriteLine($"Token request parameters: grant_type=refresh_token, client_id={_clientId}, scopes={string.Join(" ", _scopes)}");
+
         var content = new FormUrlEncodedContent(parameters);
 
         using var client = new HttpClient();
+        Console.WriteLine("Making POST request to token endpoint");
         var response = await client.PostAsync(tokenEndpoint, content);
+        Console.WriteLine($"Token response status: {response.StatusCode}");
+        
         var jsonResponse = await response.Content.ReadAsStringAsync();
+        Console.WriteLine($"Token response content: {jsonResponse}");
 
         var tokenResponse = JsonSerializer.Deserialize<TokenResponse>(jsonResponse);
 
         if (tokenResponse == null)
         {
+            Console.WriteLine("Failed to deserialize token response");
             throw new Exception();
         }
         
+        Console.WriteLine($"Successfully retrieved access token: {tokenResponse.AccessToken?.Substring(0, Math.Min(20, tokenResponse.AccessToken.Length))}...");
         return tokenResponse.AccessToken;
     }
 

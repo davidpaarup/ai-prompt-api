@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using AiPromptApi.Model;
+using AiPromptApi.Services;
 using Microsoft.Graph.Me.SendMail;
 using Microsoft.Graph.Models;
 using Microsoft.SemanticKernel;

@@ -1,9 +1,10 @@
+using AiPromptApi.Config;
 using Grafana.OpenTelemetry;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
-using AiPromptApi;
+using AiPromptApi.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 
@@ -14,6 +15,27 @@ builder.Services.AddOpenApi();
 builder.Services.AddScoped<GraphClientFactory>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IAccountRepository, AccountRepository>();
+builder.Services.AddScoped<IKernelService, KernelService>();
+
+var semanticKernelSettings = builder.Configuration.GetRequiredSection("SemanticKernel")
+    .Get<SemanticKernelSettings>();
+
+if (semanticKernelSettings == null)
+{
+    throw new Exception();
+}
+
+builder.Services.AddSingleton(semanticKernelSettings);
+
+var azureApplicationSettings = builder.Configuration.GetRequiredSection("AzureApplication")
+    .Get<AzureApplicationSettings>();
+
+if (azureApplicationSettings == null)
+{
+    throw new Exception();
+}
+
+builder.Services.AddSingleton(azureApplicationSettings);
 
 var issuer = builder.Configuration["Issuer"];
 
@@ -29,12 +51,10 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         {
             ValidateIssuer = false,
             ValidateAudience = false,
-            ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            ValidAlgorithms = [SecurityAlgorithms.EcdsaSha256],
             
             IssuerSigningKeyResolver = (_, _, kid, _) => 
-                GetSigningKeysFromJwks(kid, issuer).GetAwaiter().GetResult()
+                JwtKeyService.GetSigningKeysFromJwks(kid, issuer).GetAwaiter().GetResult()
         };
         
     });
@@ -77,36 +97,9 @@ builder.Services.AddOpenTelemetry()
 var app = builder.Build();
 
 app.UseCors("AllowFrontend");
-
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
-
-return;
-
-async Task<IEnumerable<SecurityKey>> GetSigningKeysFromJwks(string? kid, string issuer)
-{
-    var jwksUrl = $"{issuer}/api/auth/jwks";
-    
-    using var httpClient = new HttpClient();
-    var response = await httpClient.GetStringAsync(jwksUrl);
-    
-    var jwks = new JsonWebKeySet(response);
-
-    if (string.IsNullOrEmpty(kid))
-    {
-        return jwks.Keys;
-    }
-        
-    var key = jwks.Keys.FirstOrDefault(k => k.Kid == kid);
-
-    if (key == null)
-    {
-        return jwks.Keys;
-    }
-            
-    return [key];
-}

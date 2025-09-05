@@ -1,11 +1,12 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using AiPromptApi.Config;
 using Microsoft.Graph;
 using Microsoft.Kiota.Abstractions.Authentication;
 
-namespace AiPromptApi;
+namespace AiPromptApi.Services;
 
-public class GraphClientFactory(IConfiguration configuration, IHttpContextAccessor httpContextAccessor, 
+public class GraphClientFactory(AzureApplicationSettings azureApplicationSettings, IHttpContextAccessor httpContextAccessor, 
     IAccountRepository accountRepository)
 {
     public async Task<GraphServiceClient> CreateAsync()
@@ -29,11 +30,11 @@ public class GraphClientFactory(IConfiguration configuration, IHttpContextAccess
     
     private async Task<string> GetAccessTokenAsync()
     {
-        var clientId = configuration["ClientId"];
-        var clientSecret = configuration["ClientSecret"];
-        var tenantId = configuration["TenantId"];
+        var clientId = azureApplicationSettings.ClientId;
+        var clientSecret = azureApplicationSettings.ClientSecret;
+        var tenantId = azureApplicationSettings.TenantId;
         
-        if (httpContextAccessor.HttpContext == null || clientId == null || clientSecret == null || tenantId == null)
+        if (httpContextAccessor.HttpContext == null )
         {
             throw new Exception();
         }
@@ -43,23 +44,12 @@ public class GraphClientFactory(IConfiguration configuration, IHttpContextAccess
         
         var tokenEndpoint = $"https://login.microsoftonline.com/{tenantId}/oauth2/v2.0/token";
 
-        IEnumerable<string> scopes =
-        [
-            "User.Read",
-            "Mail.Read",
-            "Mail.Send",
-            "Files.Read",
-            "Files.Read.All",
-            "Calendars.Read"
-        ];
-        
         var parameters = new Dictionary<string, string>
         {
             {"grant_type", "refresh_token"},
             {"refresh_token", refreshToken},
             {"client_id", clientId},
             {"client_secret", clientSecret},
-            {"scope", string.Join(" ", scopes)}
         };
 
         var content = new FormUrlEncodedContent(parameters);

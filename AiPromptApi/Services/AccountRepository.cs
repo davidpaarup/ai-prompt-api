@@ -1,6 +1,6 @@
 using Microsoft.Data.SqlClient;
 
-namespace AiPromptApi;
+namespace AiPromptApi.Services;
 
 public class AccountRepository : IAccountRepository
 {
@@ -23,8 +23,10 @@ public class AccountRepository : IAccountRepository
         await using var connection = new SqlConnection(_connectionString);
         connection.Open();
 
-        await using var command = new SqlCommand("SELECT RefreshToken FROM Account WHERE ProviderId = " +
-                                                 "@providerId AND UserId = @userId", connection);
+        const string sql = "SELECT RefreshToken FROM Account WHERE ProviderId = " +
+                           "@providerId AND UserId = @userId";
+
+        await using var command = new SqlCommand(sql, connection);
         
         command.Parameters.AddWithValue("@providerId", providerId);
         command.Parameters.AddWithValue("@userId", userId);

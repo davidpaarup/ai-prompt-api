@@ -1,4 +1,4 @@
-namespace AiPromptApi;
+namespace AiPromptApi.Services;
 
 public interface IAccountRepository
 {

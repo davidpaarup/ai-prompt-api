@@ -5,13 +5,11 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using AiPromptApi.Services;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
-builder.Services.AddOpenApi();
 builder.Services.AddScoped<GraphClientFactory>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IAccountRepository, AccountRepository>();
@@ -44,17 +42,22 @@ if (issuer == null)
     throw new Exception();
 }
 
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+builder.Services.AddAuthentication()
     .AddJwtBearer(options =>
     {
         options.TokenValidationParameters = new TokenValidationParameters
         {
-            ValidateIssuer = false,
-            ValidateAudience = false,
-            ValidateIssuerSigningKey = true,
+            ValidIssuer = issuer,
+            ValidAudience = issuer,
             
-            IssuerSigningKeyResolver = (_, _, kid, _) => 
-                JwtKeyService.GetSigningKeysFromJwks(kid, issuer).GetAwaiter().GetResult()
+            IssuerSigningKeyResolver = (_, _, kid, _) =>
+            {
+                var jwksUrl = $"{issuer}/api/auth/jwks";
+                var httpClient = new HttpClient();
+                var response = httpClient.GetStringAsync(jwksUrl).GetAwaiter().GetResult();
+                var jwks = new JsonWebKeySet(response);
+                return jwks.Keys.Where(k => k.Kid == kid);
+            }
         };
         
     });

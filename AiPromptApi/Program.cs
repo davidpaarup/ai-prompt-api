@@ -20,11 +20,6 @@ builder.Services.AddScoped<IUserService, UserService>();
 var semanticKernelSettings = builder.Configuration.GetRequiredSection<SemanticKernelSettings>("SemanticKernel");
 builder.Services.AddSingleton(semanticKernelSettings);
 
-var azureApplicationSettings = builder.Configuration
-        .GetRequiredSection<AzureApplicationSettings>("AzureApplication");
-
-builder.Services.AddSingleton(azureApplicationSettings);
-
 var frontendUrl = builder.Configuration.GetRequiredValue("FrontendUrl");
 
 builder.Services.AddAuthentication()

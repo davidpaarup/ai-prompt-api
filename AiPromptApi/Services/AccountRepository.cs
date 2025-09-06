@@ -7,12 +7,12 @@ public class AccountRepository(IConfiguration configuration) : IAccountRepositor
 {
     private readonly string _connectionString = configuration.GetRequiredValue("ConnectionString");
 
-    public async Task<string> GetRefreshTokenAsync(string userId, string providerId)
+    public async Task<string> GetAccessTokenAsync(string userId, string providerId)
     {
         await using var connection = new SqlConnection(_connectionString);
         connection.Open();
 
-        const string sql = "SELECT RefreshToken FROM Account WHERE ProviderId = " +
+        const string sql = "SELECT AccessToken FROM Account WHERE ProviderId = " +
                            "@providerId AND UserId = @userId";
 
         await using var command = new SqlCommand(sql, connection);
@@ -21,13 +21,13 @@ public class AccountRepository(IConfiguration configuration) : IAccountRepositor
         command.Parameters.AddWithValue("@userId", userId);
         
         var result = command.ExecuteScalar();
-        var refreshToken = result?.ToString();
+        var token = result?.ToString();
 
-        if (refreshToken == null)
+        if (token == null)
         {
             throw new Exception();
         }
 
-        return refreshToken;
+        return token;
     }
 }

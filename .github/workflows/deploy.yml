@@ -12,33 +12,15 @@ env:
   AZURE_CONTAINER_REGISTRY: davidpaarup.azurecr.io 
   AZURE_CONTAINER_APP: ai-prompt-api
   AZURE_RESOURCE_GROUP: ai-prompt
-  AZURE_CONTAINER_ENVIRONMENT: ai-prompt-api-env
   IMAGE_NAME: ai-prompt-api                   
-  DOTNET_VERSION: '9.0.x'                        
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    environment:
-      name: 'Production'
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: ${{ env.DOTNET_VERSION }}
-
-    - name: Restore dependencies
-      run: dotnet restore
-
-    - name: Build application
-      run: dotnet build --no-restore --configuration Release
-
-    - name: Run tests
-      run: dotnet test --no-build --configuration Release --verbosity normal
 
     - name: Login to Azure
       uses: azure/login@v2

@@ -1,22 +1,11 @@
+using AiPromptApi.Config;
 using Microsoft.Data.SqlClient;
 
 namespace AiPromptApi.Services;
 
-public class AccountRepository : IAccountRepository
+public class AccountRepository(IConfiguration configuration) : IAccountRepository
 {
-    private readonly string _connectionString;
-
-    public AccountRepository(IConfiguration configuration)
-    {
-        var connectionString = configuration["ConnectionString"];
-
-        if (connectionString == null)
-        {
-            throw new Exception();
-        }
-
-        _connectionString = connectionString;
-    }
+    private readonly string _connectionString = configuration.GetRequiredValue("ConnectionString");
 
     public async Task<string> GetRefreshTokenAsync(string userId, string providerId)
     {

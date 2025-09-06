@@ -15,32 +15,15 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IAccountRepository, AccountRepository>();
 builder.Services.AddScoped<IKernelService, KernelService>();
 
-var semanticKernelSettings = builder.Configuration.GetRequiredSection("SemanticKernel")
-    .Get<SemanticKernelSettings>();
-
-if (semanticKernelSettings == null)
-{
-    throw new Exception();
-}
-
+var semanticKernelSettings = builder.Configuration.GetRequiredSection<SemanticKernelSettings>("SemanticKernel");
 builder.Services.AddSingleton(semanticKernelSettings);
 
-var azureApplicationSettings = builder.Configuration.GetRequiredSection("AzureApplication")
-    .Get<AzureApplicationSettings>();
-
-if (azureApplicationSettings == null)
-{
-    throw new Exception();
-}
+var azureApplicationSettings = builder.Configuration
+        .GetRequiredSection<AzureApplicationSettings>("AzureApplication");
 
 builder.Services.AddSingleton(azureApplicationSettings);
 
-var issuer = builder.Configuration["Issuer"];
-
-if (issuer == null)
-{
-    throw new Exception();
-}
+var issuer = builder.Configuration.GetRequiredValue("Issuer");
 
 builder.Services.AddAuthentication()
     .AddJwtBearer(options =>

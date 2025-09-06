@@ -14,6 +14,7 @@ COPY ["${PROJECT_NAME}/", "./"]
 RUN dotnet publish "${PROJECT_NAME}.csproj" -c Release -o /app/publish
 
 FROM base AS final
+ARG PROJECT_NAME
 WORKDIR /app
 COPY --from=publish /app/publish .
 

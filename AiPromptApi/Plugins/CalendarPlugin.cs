@@ -8,7 +8,7 @@ namespace AiPromptApi.Plugins;
 public class CalendarPlugin(GraphClientFactory graphClientFactory)
 {
     [KernelFunction("fetch_next_month_events")]
-    [Description("Fetches calendar events for the current month.")]
+    [Description("Fetches calendar events for the current month. The times are in UTC.")]
     private async Task<IEnumerable<DomainEvent>> FetchCurrentMonthCalendarEventsAsync()
     {
         var currentDate = DateTime.Now;
@@ -22,8 +22,15 @@ public class CalendarPlugin(GraphClientFactory graphClientFactory)
         var events = await client.Me.Calendar.Events
             .GetAsync(config =>
             {
+                const string format = "yyyy-MM-ddTHH:mm:ss.fffK";
+                
+                var formattedStart = startOfMonth.ToString(format);
+                var formattedEnd = endOfMonth.ToString(format);
+                
                 config.QueryParameters.Filter =
-                    $"start/dateTime ge '{startOfMonth:yyyy-MM-ddTHH:mm:ss.fffK}' and end/dateTime le '{endOfMonth:yyyy-MM-ddTHH:mm:ss.fffK}'";
+                    $"start/dateTime ge '{formattedStart}' and end/dateTime le " +
+                    $"'{formattedEnd}'";
+                
                 config.QueryParameters.Orderby = ["start/dateTime"];
             });
 
@@ -34,9 +41,22 @@ public class CalendarPlugin(GraphClientFactory graphClientFactory)
 
         foreach (var calendarEvent in events.Value)
         {
-            var startTime = DateTime.Parse(calendarEvent.Start?.DateTime ?? "").ToString("yyyy-MM-dd HH:mm");
-            var endTime = DateTime.Parse(calendarEvent.End?.DateTime ?? "").ToString("HH:mm");
-            var e = new DomainEvent(startTime, endTime, calendarEvent.Subject ?? "");
+            var start = calendarEvent.Start?.DateTime;
+            var end = calendarEvent.End?.DateTime;
+            
+            if (start == null || end == null)
+            {
+                throw new Exception();
+            }
+            
+            const string format = "yyyy-MM-dd HH:mm";
+            
+            var startTime = DateTime.Parse(start).ToString(format);
+            var endTime = DateTime.Parse(end).ToString(format);
+            
+            var subject = calendarEvent.Subject ?? "";
+            
+            var e = new DomainEvent(startTime, endTime, subject);
             calendarEvents = calendarEvents.Append(e);
         }
 

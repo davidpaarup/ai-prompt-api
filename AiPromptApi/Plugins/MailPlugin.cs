@@ -46,7 +46,7 @@ public class MailPlugin(GraphClientFactory graphClientFactory)
     }
     
     [KernelFunction("fetch_mails_from_inbox")]
-    [Description("Fetches all the emails from the inbox.")]
+    [Description("Fetches the 25 most recent emails from the inbox.")]
     private async Task<IEnumerable<DomainMessage>> FetchCurrentMonthCalendarEventsAsync()
     {
         var client = await graphClientFactory.CreateAsync();
@@ -56,14 +56,14 @@ public class MailPlugin(GraphClientFactory graphClientFactory)
             .Messages
             .GetAsync(config =>
             {
-                config.QueryParameters.Select = ["from", "isRead", "receivedDateTime", "subject"];
+                config.QueryParameters.Select = ["body", "subject"];
                 config.QueryParameters.Top = 25;
                 config.QueryParameters.Orderby = ["receivedDateTime DESC"];
             });
 
         if (messagePage?.Value == null)
         {
-            return [];
+            throw new Exception();
         }
 
         List<DomainMessage> messages = [];

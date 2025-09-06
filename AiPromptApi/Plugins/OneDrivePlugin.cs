@@ -8,7 +8,7 @@ namespace AiPromptApi.Plugins;
 public class OneDrivePlugin(GraphClientFactory graphClientFactory)
 {
     [KernelFunction("fetch_file_names_and_ids_on_root")]
-    [Description("Fetches the file names and IDs in a Drive root")]
+    [Description("Fetches the file names and IDs in a Microsoft OneDrive root")]
     private async Task<IEnumerable<DomainFile>> FetchNumberOfFilesAsync()
     {
         var client = await graphClientFactory.CreateAsync();
@@ -43,7 +43,7 @@ public class OneDrivePlugin(GraphClientFactory graphClientFactory)
     }
     
     [KernelFunction("fetch_content_of_file")]
-    [Description("Fetches the content of a file, given the file ID")]
+    [Description("Fetches the content of a file, given the file ID, from the Microsoft OneDrive.")]
     private async Task<string> FetchNumberOfFilesAsync(string fileId)
     {
         var split = fileId.Split('!');

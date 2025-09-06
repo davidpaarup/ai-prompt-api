@@ -10,7 +10,7 @@ namespace AiPromptApi.Plugins;
 public class MailPlugin(GraphClientFactory graphClientFactory)
 {
     [KernelFunction("send_email")]
-    [Description("Sends an email with the specified subject and body to the given recipient.")]
+    [Description("Sends an email via Outlook with the specified subject and body to the given recipient.")]
     private async Task<bool> SendEmailAsync(string subject, string body, string recipient)
     {
         var message = new Message
@@ -46,7 +46,7 @@ public class MailPlugin(GraphClientFactory graphClientFactory)
     }
     
     [KernelFunction("fetch_mails_from_inbox")]
-    [Description("Fetches the 25 most recent emails from the inbox.")]
+    [Description("Fetches the 25 most recent emails from Outlook's inbox.")]
     private async Task<IEnumerable<DomainMessage>> FetchCurrentMonthCalendarEventsAsync()
     {
         var client = await graphClientFactory.CreateAsync();

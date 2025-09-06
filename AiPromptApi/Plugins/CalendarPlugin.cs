@@ -8,7 +8,7 @@ namespace AiPromptApi.Plugins;
 public class CalendarPlugin(GraphClientFactory graphClientFactory)
 {
     [KernelFunction("fetch_next_month_events")]
-    [Description("Fetches calendar events for the current month. The times are in UTC.")]
+    [Description("Fetches events from the Outlook calendar for the current month. The times are in UTC.")]
     private async Task<IEnumerable<DomainEvent>> FetchCurrentMonthCalendarEventsAsync()
     {
         var currentDate = DateTime.Now;

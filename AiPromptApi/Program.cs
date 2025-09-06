@@ -30,10 +30,15 @@ var frontendUrl = builder.Configuration.GetRequiredValue("FrontendUrl");
 builder.Services.AddAuthentication()
     .AddJwtBearer(options =>
     {
+        var isDevelopment = builder.Environment.IsDevelopment();
+        
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidIssuer = frontendUrl,
             ValidAudience = frontendUrl,
+            
+            ValidateIssuer = !isDevelopment,
+            ValidateAudience = !isDevelopment,
             
             IssuerSigningKeyResolver = (_, _, kid, _) =>
             {

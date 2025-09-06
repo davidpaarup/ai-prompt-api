@@ -12,7 +12,8 @@ env:
   AZURE_CONTAINER_REGISTRY: davidpaarup.azurecr.io 
   AZURE_CONTAINER_APP: ai-prompt-api
   AZURE_RESOURCE_GROUP: ai-prompt
-  IMAGE_NAME: ai-prompt-api                   
+  IMAGE_NAME: ai-prompt-api    
+  PROJECT_NAME: AiPromptApi               
 
 jobs:
   build-and-deploy:
@@ -33,7 +34,7 @@ jobs:
 
     - name: Build and push Docker image
       run: |
-        docker build -t ${{ env.AZURE_CONTAINER_REGISTRY }}/${{ env.IMAGE_NAME }}:latest .
+        docker build -t ${{ env.AZURE_CONTAINER_REGISTRY }}/${{ env.IMAGE_NAME }}:latest --build-arg PROJECT_NAME=${{ env.PROJECT_NAME }} .
         docker push ${{ env.AZURE_CONTAINER_REGISTRY }}/${{ env.IMAGE_NAME }}:latest
 
     - name: Deploy to Azure Container Apps

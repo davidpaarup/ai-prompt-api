@@ -47,11 +47,13 @@ builder.Services.AddAuthentication()
 
 builder.Services.AddAuthorization();
 
+var frontendUrl = builder.Configuration.GetRequiredValue("FrontendUrl");
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:3000", "https://ai-prompt-bice.vercel.app")
+        policy.WithOrigins("http://localhost:3000", frontendUrl)
             .AllowAnyHeader()
             .AllowAnyMethod();
     });

@@ -23,19 +23,19 @@ var azureApplicationSettings = builder.Configuration
 
 builder.Services.AddSingleton(azureApplicationSettings);
 
-var issuer = builder.Configuration.GetRequiredValue("Issuer");
+var frontendUrl = builder.Configuration.GetRequiredValue("FrontendUrl");
 
 builder.Services.AddAuthentication()
     .AddJwtBearer(options =>
     {
         options.TokenValidationParameters = new TokenValidationParameters
         {
-            ValidIssuer = issuer,
-            ValidAudience = issuer,
+            ValidIssuer = frontendUrl,
+            ValidAudience = frontendUrl,
             
             IssuerSigningKeyResolver = (_, _, kid, _) =>
             {
-                var jwksUrl = $"{issuer}/api/auth/jwks";
+                var jwksUrl = $"{frontendUrl}/api/auth/jwks";
                 var httpClient = new HttpClient();
                 var response = httpClient.GetStringAsync(jwksUrl).GetAwaiter().GetResult();
                 var jwks = new JsonWebKeySet(response);
@@ -46,8 +46,6 @@ builder.Services.AddAuthentication()
     });
 
 builder.Services.AddAuthorization();
-
-var frontendUrl = builder.Configuration.GetRequiredValue("FrontendUrl");
 
 builder.Services.AddCors(options =>
 {

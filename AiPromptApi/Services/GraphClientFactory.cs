@@ -6,7 +6,7 @@ using Microsoft.Kiota.Abstractions.Authentication;
 
 namespace AiPromptApi.Services;
 
-public class GraphClientFactory(AzureApplicationSettings azureApplicationSettings, IHttpContextAccessor httpContextAccessor, 
+public class GraphClientFactory(AzureApplicationSettings azureApplicationSettings, IUserService userService,
     IAccountRepository accountRepository)
 {
     public async Task<GraphServiceClient> CreateAsync()
@@ -33,13 +33,8 @@ public class GraphClientFactory(AzureApplicationSettings azureApplicationSetting
         var clientId = azureApplicationSettings.ClientId;
         var clientSecret = azureApplicationSettings.ClientSecret;
         var tenantId = azureApplicationSettings.TenantId;
-        
-        if (httpContextAccessor.HttpContext == null )
-        {
-            throw new Exception();
-        }
-        
-        var userId = httpContextAccessor.HttpContext.User.Claims.Single(c => c.Type == "id").Value;
+
+        var userId = userService.GetUserId();
         var refreshToken = await accountRepository.GetRefreshTokenAsync(userId, "microsoft");
         
         var tokenEndpoint = $"https://login.microsoftonline.com/{tenantId}/oauth2/v2.0/token";

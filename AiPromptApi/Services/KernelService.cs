@@ -6,12 +6,14 @@ using Microsoft.SemanticKernel.Connectors.OpenAI;
 
 namespace AiPromptApi.Services;
 
-public class KernelService(SemanticKernelSettings semanticKernelSettings, IServiceProvider serviceProvider) : IKernelService
+public class KernelService(SemanticKernelSettings semanticKernelSettings, IServiceProvider serviceProvider,
+    IUserService userService, IApiTokenRepository apiTokenRepository) : IKernelService
 {
     public async IAsyncEnumerable<string> GetReplyAsync(string input)
     {
         var modelId = semanticKernelSettings.ModelId;
-        var apiKey = semanticKernelSettings.OpenAiKey;
+        var userId = userService.GetUserId();
+        var apiKey = await apiTokenRepository.GetAsync(userId);
 
         var kernelBuilder = Kernel.CreateBuilder().AddOpenAIChatCompletion(modelId, apiKey);
 

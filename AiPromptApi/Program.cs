@@ -13,7 +13,9 @@ builder.Services.AddControllers();
 builder.Services.AddScoped<GraphClientFactory>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IAccountRepository, AccountRepository>();
+builder.Services.AddScoped<IApiTokenRepository, ApiTokenRepository>();
 builder.Services.AddScoped<IKernelService, KernelService>();
+builder.Services.AddScoped<IUserService, UserService>();
 
 var semanticKernelSettings = builder.Configuration.GetRequiredSection<SemanticKernelSettings>("SemanticKernel");
 builder.Services.AddSingleton(semanticKernelSettings);

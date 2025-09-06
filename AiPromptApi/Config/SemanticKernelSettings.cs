@@ -1,7 +1,6 @@
 namespace AiPromptApi.Config;
 
-public class SemanticKernelSettings(string modelId, string openAiKey)
+public class SemanticKernelSettings(string modelId)
 {
     public string ModelId { get; set; } = modelId;
-    public string OpenAiKey { get; set; } = openAiKey;
 }

@@ -17,4 +17,4 @@ FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
 
-ENTRYPOINT ["sh", "-c", "dotnet ${PROJECT_NAME}.dll"]
+ENTRYPOINT sh -c "dotnet ${PROJECT_NAME}.dll"

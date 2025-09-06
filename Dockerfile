@@ -1,23 +1,18 @@
-# Use the official .NET runtime as a parent image
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
 WORKDIR /app
 EXPOSE 8080
 
-# Use the SDK image to build the app
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 
-# Define build argument for project name
 ARG PROJECT_NAME
 
-# Publish the app
 FROM build AS publish
 COPY ["${PROJECT_NAME}/${PROJECT_NAME}.csproj", "./"]
 RUN dotnet restore "${PROJECT_NAME}.csproj"
 COPY ["${PROJECT_NAME}/", "./"]
 RUN dotnet publish "${PROJECT_NAME}.csproj" -c Release -o /app/publish
 
-# Build runtime image
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .

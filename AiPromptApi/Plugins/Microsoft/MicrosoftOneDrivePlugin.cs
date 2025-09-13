@@ -3,9 +3,9 @@ using AiPromptApi.Model;
 using AiPromptApi.Services;
 using Microsoft.SemanticKernel;
 
-namespace AiPromptApi.Plugins;
+namespace AiPromptApi.Plugins.Microsoft;
 
-public class OneDrivePlugin(GraphClientFactory graphClientFactory)
+public class MicrosoftOneDrivePlugin(GraphClientFactory graphClientFactory)
 {
     [KernelFunction("fetch_file_names_and_ids_on_root")]
     [Description("Fetches the file names and IDs in a Microsoft OneDrive root")]

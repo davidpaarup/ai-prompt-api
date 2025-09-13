@@ -3,9 +3,9 @@ using AiPromptApi.Model;
 using AiPromptApi.Services;
 using Microsoft.SemanticKernel;
 
-namespace AiPromptApi.Plugins;
+namespace AiPromptApi.Plugins.Microsoft;
 
-public class CalendarPlugin(GraphClientFactory graphClientFactory)
+public class MicrosoftCalendarPlugin(GraphClientFactory graphClientFactory)
 {
     [KernelFunction("fetch_next_month_events")]
     [Description("Fetches events from the Outlook calendar for the current month. The times are in UTC.")]

@@ -5,9 +5,9 @@ using Microsoft.Graph.Me.SendMail;
 using Microsoft.Graph.Models;
 using Microsoft.SemanticKernel;
 
-namespace AiPromptApi.Plugins;
+namespace AiPromptApi.Plugins.Microsoft;
 
-public class MailPlugin(GraphClientFactory graphClientFactory)
+public class MicrosoftMailPlugin(GraphClientFactory graphClientFactory)
 {
     [KernelFunction("send_email")]
     [Description("Sends an email via Outlook with the specified subject and body to the given recipient.")]

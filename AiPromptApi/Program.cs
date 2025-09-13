@@ -11,6 +11,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddScoped<GraphClientFactory>();
+builder.Services.AddScoped<GoogleClientFactory>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IAccountRepository, AccountRepository>();
 builder.Services.AddScoped<IApiTokenRepository, ApiTokenRepository>();

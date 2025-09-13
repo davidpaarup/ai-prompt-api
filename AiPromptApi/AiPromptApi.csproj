@@ -8,6 +8,8 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="Google.Apis.Auth" Version="1.71.0" />
+        <PackageReference Include="Google.Apis.Calendar.v3" Version="1.69.0.3746" />
         <PackageReference Include="Grafana.OpenTelemetry" Version="1.3.0" />
         <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.8" />
         <PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.1" />

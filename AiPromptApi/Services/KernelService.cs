@@ -1,5 +1,6 @@
 using AiPromptApi.Config;
 using AiPromptApi.Plugins;
+using AiPromptApi.Plugins.Google;
 using AiPromptApi.Plugins.Microsoft;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
@@ -23,6 +24,7 @@ public class KernelService(SemanticKernelSettings semanticKernelSettings, IServi
         kernel.Plugins.AddFromType<MicrosoftMailPlugin>(nameof(MicrosoftMailPlugin), serviceProvider);
         kernel.Plugins.AddFromType<MicrosoftOneDrivePlugin>(nameof(MicrosoftOneDrivePlugin), serviceProvider);
         kernel.Plugins.AddFromType<TextToAudioPlugin>(nameof(TextToAudioPlugin), serviceProvider);
+        kernel.Plugins.AddFromType<GoogleCalendarPlugin>(nameof(GoogleCalendarPlugin), serviceProvider);
         
         var chatCompletionService = kernel.GetRequiredService<IChatCompletionService>();
         var history = new ChatHistory();

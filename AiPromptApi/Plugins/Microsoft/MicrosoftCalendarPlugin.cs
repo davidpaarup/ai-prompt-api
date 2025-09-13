@@ -7,7 +7,7 @@ namespace AiPromptApi.Plugins.Microsoft;
 
 public class MicrosoftCalendarPlugin(GraphClientFactory graphClientFactory)
 {
-    [KernelFunction("fetch_next_month_events")]
+    [KernelFunction("fetch_next_month_events_from_microsoft")]
     [Description("Fetches events from the Outlook calendar for the current month. The times are in UTC.")]
     private async Task<IEnumerable<DomainEvent>> FetchCurrentMonthCalendarEventsAsync()
     {

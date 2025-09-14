@@ -9,7 +9,7 @@ namespace AiPromptApi.Plugins.Microsoft;
 
 public class MicrosoftMailPlugin(GraphClientFactory graphClientFactory)
 {
-    [KernelFunction("send_email")]
+    [KernelFunction("send_outlook_email")]
     [Description("Sends an email via Outlook with the specified subject and body to the given recipient.")]
     private async Task<bool> SendEmailAsync(string subject, string body, string recipient)
     {

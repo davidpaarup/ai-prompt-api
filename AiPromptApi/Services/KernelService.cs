@@ -22,7 +22,6 @@ public class KernelService(SemanticKernelSettings semanticKernelSettings, IServi
         kernel.Plugins.AddFromType<MicrosoftCalendarPlugin>(nameof(MicrosoftCalendarPlugin), serviceProvider);
         kernel.Plugins.AddFromType<MicrosoftMailPlugin>(nameof(MicrosoftMailPlugin), serviceProvider);
         kernel.Plugins.AddFromType<MicrosoftOneDrivePlugin>(nameof(MicrosoftOneDrivePlugin), serviceProvider);
-        kernel.Plugins.AddFromType<TextToAudioPlugin>(nameof(TextToAudioPlugin), serviceProvider);
         
         var chatCompletionService = kernel.GetRequiredService<IChatCompletionService>();
         var history = new ChatHistory();

@@ -7,13 +7,12 @@ namespace AiPromptApi.Plugins.Microsoft;
 
 public class MicrosoftCalendarPlugin(GraphClientFactory graphClientFactory)
 {
-    [KernelFunction("fetch_next_month_events_from_microsoft")]
-    [Description("Fetches events from the Outlook calendar for the current month. The times are in UTC.")]
+    [KernelFunction("fetch_events_from_microsoft")]
+    [Description("Fetches events from the Outlook calendar for the next 30 days. The times are in UTC.")]
     private async Task<IEnumerable<DomainEvent>> FetchCurrentMonthCalendarEventsAsync()
     {
         var currentDate = DateTime.Now;
-        var startOfMonth = new DateTime(currentDate.Year, currentDate.Month, 1);
-        var endOfMonth = startOfMonth.AddMonths(1).AddDays(-1);
+        var endDate = currentDate.AddDays(30);
 
         IEnumerable<DomainEvent> calendarEvents = [];
 
@@ -24,8 +23,8 @@ public class MicrosoftCalendarPlugin(GraphClientFactory graphClientFactory)
             {
                 const string format = "yyyy-MM-ddTHH:mm:ss.fffK";
                 
-                var formattedStart = startOfMonth.ToString(format);
-                var formattedEnd = endOfMonth.ToString(format);
+                var formattedStart = currentDate.ToString(format);
+                var formattedEnd = endDate.ToString(format);
                 
                 config.QueryParameters.Filter =
                     $"start/dateTime ge '{formattedStart}' and end/dateTime le " +

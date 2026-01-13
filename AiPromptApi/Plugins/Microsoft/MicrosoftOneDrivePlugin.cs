@@ -44,8 +44,15 @@ public class MicrosoftOneDrivePlugin(GraphClientFactory graphClientFactory)
     
     [KernelFunction("fetch_content_of_file")]
     [Description("Fetches the content of a file, given the file ID, from the Microsoft OneDrive.")]
-    private async Task<string> FetchNumberOfFilesAsync(string fileId)
+    private async Task<string> FetchNumberOfFilesAsync(string fileId, string name)
     {
+        var extension = Path.GetExtension(name);
+
+        if (extension != ".txt")
+        {
+            throw new Exception("The file must be a .txt file.");
+        }
+        
         var split = fileId.Split('!');
         var driveId = split[0];
 

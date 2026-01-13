@@ -46,7 +46,8 @@ public class MicrosoftMailPlugin(GraphClientFactory graphClientFactory)
     }
     
     [KernelFunction("fetch_mails_from_inbox")]
-    [Description("Fetches the 25 most recent emails from Outlook's inbox.")]
+    [Description("Fetches the 25 most recent emails from Outlook's inbox. Don't translate" +
+                 "the subject or body, just return them as-is.")]
     private async Task<IEnumerable<DomainMessage>> FetchCurrentMonthCalendarEventsAsync()
     {
         var client = await graphClientFactory.CreateAsync();
